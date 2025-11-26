@@ -1,0 +1,127 @@
+substitutions:
+  device_name: a4-button
+  friendly_name: a4 button
+  #Secret YAML is used for next data:
+  api_pw: !secret api_password
+
+esphome:
+  name: ${device_name}
+  on_boot:
+    then:
+      - switch.turn_on: led_sw
+      - light.turn_on:
+          id: led_1
+          brightness: 60%
+          red: 0
+          green: 80%
+          blue: 0
+      - output.turn_on: buzzer
+      - output.set_level:
+          id: buzzer
+          level: "50%"
+      - delay: 0.2s
+      - output.turn_off: buzzer
+      - delay: 2s
+      - switch.turn_off: led_sw
+      - if:
+          condition:
+            binary_sensor.is_off: btn1
+          then:
+            - switch.turn_on: led_sw
+            - deep_sleep.prevent: gosleep
+            - logger.log: "prevent sleep"
+          else:
+            - delay: 4s
+            - deep_sleep.enter: gosleep
+
+esp32:
+  board: esp32-c3-devkitm-1
+  framework:
+    type: arduino
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_pass
+  fast_connect: true
+
+  # Set up a wifi access point
+  ap:
+    ssid: '${friendly_name}'
+    ap_timeout: 30s
+
+mqtt:
+  broker: !secret mqtt_broker
+  port: 1883
+
+captive_portal:
+
+improv_serial:
+
+output:
+  - platform: ledc
+    pin: GPIO1
+    frequency: "4000Hz"
+    id: buzzer
+
+deep_sleep:
+  id: gosleep
+  wakeup_pin:
+    number: GPIO3
+    inverted: true
+    mode: INPUT_PULLUP
+    allow_other_uses: true
+
+binary_sensor:
+  - platform: gpio
+    id: btn1
+    pin:
+      number: GPIO3
+      allow_other_uses: true
+      mode: INPUT_PULLUP
+    name: "Button"
+    device_class: window
+    on_press:
+      - logger.log: "pressed"
+    on_double_click:
+      min_length: 50ms
+      max_length: 350ms
+      then:
+        - logger.log: "double click"
+        - delay: 5s
+        - deep_sleep.enter: gosleep
+
+switch:
+  - platform: gpio
+    id: led_sw
+    pin: 
+      number: GPIO5
+      inverted: true
+
+light:
+  - platform: fastled_clockless
+    rgb_order: GRB
+    pin: GPIO4
+    num_leds: 1
+    chipset: ws2812
+    name: "My Light"
+    id: led_1
+
+# Enable logging
+logger:
+  level: DEBUG
+
+api:
+  password: ${api_pw}
+  reboot_timeout: 0s
+
+# Enable OTA
+ota:
+
+#Enable WEB
+web_server:
+  port: 80
+
+# Enable HA Time
+time:
+  - platform: homeassistant
+    id: homeassistant_time

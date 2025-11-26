@@ -1,0 +1,15 @@
+name: Build ESPHome firmware and website
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    uses: AprilBrother/a4-button/.github/workflows/build.yml@main
+    with:
+      # CHANGEME: Set the filenames of your config files here:
+      files: a4-button.yaml
+      # CHANGEME: Set the name of your project here:
+      name: a4-button

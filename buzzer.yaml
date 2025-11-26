@@ -1,0 +1,32 @@
+substitutions:
+  device_name: a4-button
+  friendly_name: a4 button
+  #Secret YAML is used for next data:
+  api_pw: !secret api_password
+  ota_pw: !secret ota_password
+
+esphome:
+  name: ${device_name}
+  on_boot:
+    then:
+      - delay: 2s
+      - output.turn_on: buzzer
+      - output.set_level:
+          id: buzzer
+          level: "50%"
+
+esp32:
+  board: esp32-c3-devkitm-1
+  framework:
+    type: arduino
+
+output:
+  - platform: ledc
+    pin: GPIO1
+    id: buzzer
+    frequency: "4400Hz"
+
+# Enable logging
+logger:
+  level: DEBUG
+

@@ -1,0 +1,93 @@
+substitutions:
+  device_name: a4-button
+  friendly_name: a4 button
+  #Secret YAML is used for next data:
+  api_pw: !secret api_password
+
+esphome:
+  name: ${device_name}
+  on_boot:
+    then:
+      - switch.turn_on: led_sw
+      - light.turn_on:
+          id: led_1
+          brightness: 60%
+          red: 0
+          green: 80%
+          blue: 0
+      - delay: 2s
+      - switch.turn_off: led_sw
+      - delay: 5min
+      - deep_sleep.enter: gosleep
+
+esp32:
+  board: esp32-c3-devkitm-1
+  framework:
+    type: arduino
+
+wifi:
+  # Set up a wifi access point
+  ap:
+    ssid: '${friendly_name}'
+    ap_timeout: 30s
+
+captive_portal:
+
+improv_serial:
+
+switch:
+  - platform: gpio
+    id: led_sw
+    pin: 
+      number: GPIO5
+      inverted: true
+
+light:
+  - platform: fastled_clockless
+    rgb_order: GRB
+    pin: GPIO4
+    num_leds: 1
+    chipset: ws2812
+    name: "My Light"
+    id: led_1
+
+binary_sensor:
+  - platform: gpio
+    id: btn1
+    pin:
+      number: GPIO3
+      allow_other_uses: true
+      mode: INPUT_PULLUP
+    name: "Button"
+    device_class: window
+    on_press:
+      - logger.log: "pressed"
+
+deep_sleep:
+  id: gosleep
+  wakeup_pin:
+    number: GPIO3
+    inverted: true
+    mode: INPUT_PULLUP
+    allow_other_uses: true
+
+# Enable logging
+logger:
+  level: DEBUG
+
+api:
+  password: ${api_pw}
+  reboot_timeout: 0s
+
+# Enable OTA
+ota:
+  platform: esphome
+
+#Enable WEB
+web_server:
+  port: 80
+
+# Enable HA Time
+time:
+  - platform: homeassistant
+    id: homeassistant_time
